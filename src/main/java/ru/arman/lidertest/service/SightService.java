@@ -1,6 +1,7 @@
 package ru.arman.lidertest.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.arman.lidertest.dto.SightDto;
 import ru.arman.lidertest.exception.CityNotFoundException;
@@ -13,7 +14,6 @@ import ru.arman.lidertest.repository.SightRepository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class SightService {
@@ -57,17 +57,15 @@ public class SightService {
     }
 
     public List<Sight> getAllSights(Optional<Boolean> sortByName, Optional<SightType> sightType) {
-        List<Sight> sights = sightRepository.findAll();
+        if (sightType.isPresent() && sortByName.isPresent() && sortByName.get())
+            return sightRepository.findByType(sightType.get(), Sort.by("name"));
+
+        if (sortByName.isPresent() && sortByName.get())
+            return sightRepository.findAll(Sort.by("name"));
 
         if (sightType.isPresent())
-            sights = sights.stream().
-                    filter(s -> s.getType().equals(sightType.get()))
-                    .collect(Collectors.toList());
-        if (sortByName.isPresent() && sortByName.get())
-            sights = sights.stream()
-                    .sorted((s1, s2) -> s1.getName().compareToIgnoreCase(s2.getName()))
-                    .collect(Collectors.toList());
+            return sightRepository.findByType(sightType.get());
 
-        return sights;
+        return sightRepository.findAll();
     }
 }
